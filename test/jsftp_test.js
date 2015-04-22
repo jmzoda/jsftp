@@ -82,7 +82,7 @@ exec('mkdir', [__dirname + "/" + remoteCWD]);
 describe("jsftp test suite", function() {
   process.on('uncaughtException', function(err) {
     console.log('Caught exception: ' + err);
-    server.stop();
+    if(server) server.stop();
   });
 
   var ftp, server;
@@ -816,4 +816,25 @@ describe("jsftp test suite", function() {
       });
     });
   });
+
+  it("creating and listing a directory containing special characters", function(next) {
+    var dirName = "_éàèùâêûô_"; //  and it works with "_aaa";
+    var newDir = remoteCWD + "/" + dirName;
+    ftp.raw.mkd(newDir, function(err, res) {
+      assert.ok(!err);
+      assert.equal(res.code, 257);
+
+      ftp.ls(remoteCWD, function(err, res) {
+        assert.ok(!err);
+        console.log(res);
+        assert.ok(res.some(function(el){return el.name.indexOf(dirName)>-1;}));
+
+        ftp.raw.rmd(newDir, function(err, res) {
+          assert.ok(!err);
+          next();
+        });
+      });
+    });
+  });
+
 });
